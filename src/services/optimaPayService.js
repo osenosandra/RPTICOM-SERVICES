@@ -40,19 +40,19 @@ class OptimaPayService {
   }
 
   /**
-   * Initiate STK Push payment
+   * Initiate a single STK Push payment request
    */
-  async initiateSTKPush(phone, amount, reference = null, description = null) {
+  async initiateSTKPush(phoneNumber, amount, reference = null, description = null) {
     try {
       const data = {
         payment_account_id: this.paymentAccountId,
-        phone: phone,
+        phone: phoneNumber, // Keeps backend compatibility mapping with OptimaPay
         amount: amount,
-        reference: reference || `BULK_${Date.now()}`,
-        description: description || 'Bulk payment'
+        reference: reference || `STK_${Date.now()}`,
+        description: description || 'Single payment'
       };
 
-      logger.info(`Initiating STK Push for ${phone}`, { amount, reference });
+      logger.info(`Initiating Single STK Push for ${phoneNumber}`, { amount, reference });
 
       const response = await this.client.post('/stkpush.php', data);
       
@@ -64,7 +64,7 @@ class OptimaPayService {
         raw: response.data
       };
     } catch (error) {
-      logger.error(`STK Push failed for ${phone}:`, error.message);
+      logger.error(`STK Push failed for ${phoneNumber}:`, error.message);
       
       return {
         success: false,
@@ -77,7 +77,7 @@ class OptimaPayService {
   }
 
   /**
-   * Check transaction status
+   * Check single transaction verification status
    */
   async checkTransactionStatus(checkoutRequestId) {
     try {
@@ -103,7 +103,7 @@ class OptimaPayService {
   }
 
   /**
-   * Get list of transactions
+   * Get list of historical transactions
    */
   async getTransactions(limit = 20, offset = 0, startDate = null, endDate = null) {
     try {
@@ -120,7 +120,7 @@ class OptimaPayService {
         pagination: response.data.pagination || null
       };
     } catch (error) {
-      logger.error('Failed to fetch transactions:', error.message);
+      logger.error('Failed to fetch transactions from vendor:', error.message);
       return {
         success: false,
         message: error.response?.data?.message || error.message || 'Unknown error',
