@@ -1,17 +1,37 @@
+const Joi = require('joi');
 const optimaPayService = require('../services/optimaPayService');
 const transactionModel = require('../models/transactionModel');
-const { bulkPaymentSchema, statusCheckSchema } = require('../utils/validators');
 const logger = require('../utils/logger');
 const config = require('../config/config');
 
+// 1. Define the validation schemas DIRECTLY here so they never fail to load
+const phoneRegex = /^(2541|2547)[0-9]{8}$/;
+
+const singlePaymentSchema = Joi.object({
+  phoneNumber: Joi.string()
+    .pattern(phoneRegex)
+    .required()
+    .messages({
+      'string.empty': 'Phone number is required',
+      'string.pattern.base': 'Phone number must be a valid format (e.g., 254712345678)'
+    }),
+  amount: Joi.number().min(1).max(1000000).required(),
+  reference: Joi.string().max(50).allow('', null),
+  description: Joi.string().max(200).allow('', null)
+});
+
+const statusCheckSchema = Joi.object({
+  checkoutRequestId: Joi.string().required()
+});
+
 class PaymentController {
   /**
-   * Process bulk STK Push payments
+   * Process a single STK Push payment
    */
-  async processBulkPayment(req, res, next) {
+  async processPayment(req, res, next) {
     try {
-      // Validate request body
-      const { error, value } = bulkPaymentSchema.validate(req.body);
+      // Validate request body directly using the local schema
+      const { error, value } = singlePaymentSchema.validate(req.body);
       if (error) {
         return res.status(400).json({
           success: false,
@@ -20,104 +40,70 @@ class PaymentController {
         });
       }
 
-      const { phoneNumbers, amount, reference, description } = value;
+      const { phoneNumber, amount, reference, description } = value;
 
-      // Create batch record
-      const batch = transactionModel.createBatch(phoneNumbers, amount, reference, description);
+      // Initiate STK Push
+      const result = await optimaPayService.initiateSTKPush(
+        phoneNumber,
+        amount,
+        reference,
+        description
+      );
 
-      // Process each phone number
-      const results = [];
-      for (const phone of phoneNumbers) {
-        // Initiate STK Push
-        const result = await optimaPayService.initiateSTKPush(
-          phone,
-          amount,
-          reference,
-          description
-        );
+      // Store transaction in database
+      const transaction = transactionModel.addTransaction({
+        phoneNumber,
+        amount,
+        reference,
+        description,
+        checkoutRequestId: result.checkout_request_id,
+        success: result.success,
+        message: result.message
+      });
 
-        // Store transaction
-        const transaction = transactionModel.addTransaction(batch.id, phone, result);
-        results.push({
-          phoneNumber: phone,
-          success: result.success,
-          message: result.message,
-          checkoutRequestId: result.checkout_request_id,
-          transactionId: transaction.id
-        });
-
-        // Small delay between requests to avoid hitting API limits
-        if (phoneNumbers.indexOf(phone) < phoneNumbers.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-      }
-
-      // Return response
-      res.status(200).json({
-        success: true,
-        message: `Processed ${results.length} payments`,
-        batchId: batch.id,
-        summary: {
-          total: results.length,
-          successful: results.filter(r => r.success).length,
-          failed: results.filter(r => !r.success).length
-        },
-        results: results,
+      // Return unified response
+      return res.status(200).json({
+        success: result.success,
+        message: result.message || 'STK Push sent successfully',
+        phoneNumber: phoneNumber,
+        amount: amount,
+        reference: reference,
+        checkoutRequestId: result.checkout_request_id,
+        transactionId: transaction.id,
         completedAt: new Date().toISOString()
       });
 
     } catch (error) {
-      logger.error('Bulk payment processing error:', error);
-      next(error);
-    }
-  }
-
-  /**
-   * Get batch status
-   */
-  async getBatchStatus(req, res, next) {
-    try {
-      const { batchId } = req.params;
-      const batch = transactionModel.getBatch(batchId);
-
-      if (!batch) {
-        return res.status(404).json({
-          success: false,
-          message: 'Batch not found'
-        });
-      }
-
-      res.status(200).json({
-        success: true,
-        data: batch
+      logger.error('STK Push payment processing error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Internal processing pipeline failure'
       });
-    } catch (error) {
-      next(error);
     }
   }
 
   /**
-   * Get all batches
+   * Get all transactions (history feed)
    */
-  async getBatches(req, res, next) {
+  async getTransactions(req, res, next) {
     try {
       const { limit = 20, offset = 0 } = req.query;
-      const result = transactionModel.getBatches(
+      const result = transactionModel.getTransactions(
         parseInt(limit),
         parseInt(offset)
       );
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: result
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
   /**
-   * Check transaction status
+   * Check single transaction status (M-Pesa API Status Check)
    */
   async checkTransactionStatus(req, res, next) {
     try {
@@ -140,14 +126,14 @@ class PaymentController {
         transactionModel.updateTransactionStatus(checkoutRequestId, statusResult);
       }
 
-      res.status(200).json({
+      return res.status(200).json({
         success: statusResult.success,
         status: statusResult.status,
         message: statusResult.message,
         data: statusResult.data
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -166,12 +152,12 @@ class PaymentController {
         });
       }
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: transaction
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 }
