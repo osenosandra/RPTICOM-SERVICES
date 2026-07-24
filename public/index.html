@@ -3,16 +3,341 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulk STK Push - OptimaPay</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <title>Single STK Push - OptimaPay</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Modern CSS Reset & Variables */
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #e0e7ff;
+            --background: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --border: #e2e8f0;
+            --border-hover: #cbd5e1;
+            --success: #059669;
+            --success-bg: #ecfdf5;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(224, 231, 255, 0.3) 0, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(236, 253, 245, 0.3) 0, transparent 50%);
+            color: var(--text-main);
+            line-height: 1.5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        /* Container & Layout Alignment */
+        .container {
+            width: 100%;
+            max-width: 580px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Header Alignment */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 4px 8px 4px;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            padding: 8px;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.025em;
+        }
+
+        /* Status Badge Alignment */
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--success-bg);
+            color: var(--success);
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid rgba(16, 185, 129, 0.15);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* Card System */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+            margin-bottom: 8px;
+        }
+
+        .card h2 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .subtitle {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            line-height: 1.45;
+        }
+
+        /* Professional Form Alignment */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 480px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* Inputs & Alignment Wrappers */
+        input {
+            width: 100%;
+            padding: 11px 14px;
+            font-size: 0.95rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            outline: none;
+            transition: all 0.15s ease-in-out;
+            font-family: inherit;
+            color: var(--text-main);
+            background-color: #fcfcfd;
+        }
+
+        input::placeholder {
+            color: #94a3b8;
+        }
+
+        input:hover {
+            border-color: var(--border-hover);
+        }
+
+        input:focus {
+            background-color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        /* Amount Prefix Alignment */
+        .amount-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .currency-symbol {
+            position: absolute;
+            left: 14px;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            pointer-events: none;
+            letter-spacing: 0.05em;
+        }
+
+        .amount-input-wrapper input {
+            padding-left: 54px; /* Prevent text overlap with prefix */
+        }
+
+        /* Button Layout & Alignment */
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn {
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 11px 20px;
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            flex-grow: 1; /* Stretch action on mobile, aligned nicely */
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border-color: var(--border);
+            color: var(--text-muted);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--background);
+            color: var(--text-main);
+            border-color: var(--border-hover);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            background: var(--background);
+            border-color: var(--border);
+            color: var(--text-muted);
+            border-radius: var(--radius-sm);
+        }
+
+        .btn-small:hover {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            border-color: var(--border-hover);
+        }
+
+        /* Transaction List Styling */
+        .empty-message {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            padding: 32px 0;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-sm);
+            background-color: #fcfcfd;
+        }
+
+        /* Footer Alignment */
+        footer {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <header>
             <div class="logo-container">
-                <span class="logo-icon">💳</span>
-                <h1>Bulk STK Push</h1>
+                <span class="logo-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="2" y1="10" x2="22" y2="10"></line>
+                    </svg>
+                </span>
+                <h1>ONLINE PAYMENT SYSTEM</h1>
             </div>
             <div class="status-badge" id="statusBadge">
                 <span class="status-dot"></span>
@@ -20,24 +345,25 @@
             </div>
         </header>
 
-        <main>
+        <main style="display: flex; flex-direction: column; gap: 24px;">
             <div class="card">
-                <h2>Send Bulk Payments</h2>
-                <p class="subtitle">Enter phone numbers and payment details to send STK Push requests</p>
+                <div>
+                    <h2>MAKE YOUR PAYMENTS</h2>
+                    <p class="subtitle">Enter your M-pesa Number to make your make payments.</p>
+                </div>
 
                 <form id="paymentForm">
                     <div class="form-group">
-                        <label for="phoneNumbers">
-                            Phone Numbers
-                            <span class="hint">One per line, format: 254712345678</span>
+                        <label for="phoneNumber">
+                            Phone Number
+                            <span class="hint">Format: 254712345678</span>
                         </label>
-                        <textarea 
-                            id="phoneNumbers" 
-                            rows="10" 
-                            placeholder="254712345678&#10;254798765432&#10;254723456789"
+                        <input 
+                            type="text" 
+                            id="phoneNumber" 
+                            placeholder="e.g., 254712345678" 
                             required
-                        ></textarea>
-                        <div class="counter" id="phoneCounter">0 numbers</div>
+                        />
                     </div>
 
                     <div class="form-row">
@@ -56,60 +382,63 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="reference">Reference (Optional)</label>
+                            <label for="reference">Reference <span class="hint" style="font-weight: 400;">(Optional)</span></label>
                             <input 
                                 type="text" 
                                 id="reference" 
-                                placeholder="e.g., BULK_001"
+                                placeholder="e.g., INV_001"
                             />
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="description">Description (Optional)</label>
+                        <label for="description">Description <span class="hint" style="font-weight: 400;">(Optional)</span></label>
                         <input 
                             type="text" 
                             id="description" 
-                            placeholder="e.g., Bulk payment for salaries"
+                            placeholder="e.g., Payment for goods"
                         />
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit" id="submitBtn" class="btn btn-primary">
-                            <span class="btn-icon">🚀</span>
-                            Send Payments
-                        </button>
                         <button type="reset" id="resetBtn" class="btn btn-secondary">
                             Clear All
+                        </button>
+                        <button type="submit" id="submitBtn" class="btn btn-primary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                            Pay Now
                         </button>
                     </div>
                 </form>
             </div>
 
-            <!-- Progress/Results Section -->
             <div id="resultsSection" class="card results-card" style="display: none;">
                 <h2>Payment Results</h2>
-                <div id="resultsContent">
-                    <!-- Dynamically populated -->
-                </div>
+                <div id="resultsContent"></div>
             </div>
 
-            <!-- Recent Batches -->
             <div class="card">
                 <div class="card-header">
-                    <h2>Recent Batches</h2>
-                    <button id="refreshBatchesBtn" class="btn btn-small">
-                        🔄 Refresh
+                    <h2 style="font-size: 1.05rem;">Recent Transactions</h2>
+                    <button id="refreshTxBtn" class="btn btn-small">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                        </svg>
+                        Refresh
                     </button>
                 </div>
-                <div id="batchesList">
-                    <p class="empty-message">No batches processed yet</p>
+             
+                <div id="transactionsList">
+                    <p class="empty-message">No transactions processed yet</p>
                 </div>
             </div>
         </main>
 
         <footer>
-            <p>&copy; 2026 Bulk STK Push App | Built with OptimaPay API</p>
+            <p>&copy; 2026 Online Payment System| Built with OptimaPay API.</p>
         </footer>
     </div>
 
