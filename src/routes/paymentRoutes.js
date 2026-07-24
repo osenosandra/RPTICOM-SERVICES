@@ -3,22 +3,25 @@ const router = express.Router();
 const paymentController = require('../controllers/paymentController');
 const { phoneRateLimiter } = require('../middlewares/rateLimiter');
 
-// Bulk payment route
-router.post('/bulk', 
+// 1. Single STK Push payment request route
+router.post('/request', 
   phoneRateLimiter,
-  paymentController.processBulkPayment
+  (req, res, next) => paymentController.processPayment(req, res, next)
 );
 
-// Get batch status
-router.get('/batch/:batchId', paymentController.getBatchStatus);
+// 2. Get transaction history feed (recent single payments)
+router.get('/transactions', 
+  (req, res, next) => paymentController.getTransactions(req, res, next)
+);
 
-// Get all batches
-router.get('/batches', paymentController.getBatches);
+// 3. Check explicit transaction status with M-Pesa API
+router.get('/status/:checkoutRequestId', 
+  (req, res, next) => paymentController.checkTransactionStatus(req, res, next)
+);
 
-// Check transaction status
-router.get('/status/:checkoutRequestId', paymentController.checkTransactionStatus);
-
-// Get transaction details
-router.get('/transaction/:transactionId', paymentController.getTransaction);
+// 4. Get local transaction record details
+router.get('/transaction/:transactionId', 
+  (req, res, next) => paymentController.getTransaction(req, res, next)
+);
 
 module.exports = router;
